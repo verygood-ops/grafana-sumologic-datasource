@@ -73,8 +73,29 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
-        return this.logQuery(params, target.format, true);
+        return this.logQuery(params, target.format, true)
+          .scan((acc, one) => {
+            acc.fields = one.fields;
+            if (acc.records) {
+
+            } else if (acc.messages) {
+
+            }
+            return acc;
+          }, [])
+          .map((data) => {
+            if (format === 'time_series_records') {
+              return this.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
+            }
+            return data;
+          });
+        // options.targets[index].format === 'records' || options.targets[index].format === 'messages';
+        // result.push(this.transformDataToTable(tableResponses));
       }).value();
+    return Observable.merge(queries).map((allData) => {
+
+    }).scan();//
+
 
     let source = new Observable(observer => {
       let result = this.loopForObservable();
