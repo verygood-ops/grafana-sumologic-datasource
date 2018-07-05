@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { Observable } from 'vendor/npm/rxjs/Observable';
 
 export class SumologicQuerier {
     constructor(params, format, timeoutSec, useObservable, datasource, backendSrv) {
@@ -119,26 +120,35 @@ export class SumologicQuerier {
 
         switch (this.state) {
             case 'CREATE_SEARCH_JOB':
-                return this.doRequest('POST', '/v1/search/jobs', this.params).then((job) => {
-                    this.job = job;
-                    return this.transition('REQUEST_STATUS');
+                return Observable.defer(() => {
+                    return this.doRequest('POST', '/v1/search/jobs', this.params).then((job) => {
+                        this.job = job;
+                        return this.transition('REQUEST_STATUS');
+                    });
                 });
                 break;
             case 'REQUEST_STATUS':
                 return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id).then((status) => {
                     this.status = status;
-                    if (this.status.data.state !== 'DONE GATHERING RESULTS') {
-                        if (this.retryCount < 20) {
-                            return this.retry();
-                        } else {
-                            return Promise.reject({ message: 'max retries exceeded' });
-                        }
-                    }
+                    let prevMessageCount = this.messageCount;
+                    let prevRecordCount = this.RecordCount;
+                    this.messageCount = this.status.data.messageCount;
+                    this.recordCount = this.status.data.recordCount;
 
                     if (!_.isEmpty(this.status.data.pendingErrors) || !_.isEmpty(this.status.data.pendingWarnings)) {
                         return Promise.reject({ message: this.status.data.pendingErrors.concat(this.status.data.pendingWarnings).join('\n') });
                     }
-                    return this.transition('REQUEST_RESULTS');
+
+                    if (this.status.data.state === 'DONE GATHERING RESULTS') {
+                        return Observable.empty();
+                    }
+
+                    if (prevMessageCount !== this.messageCount || prevRecordCount !== this.recordCount) {
+                        return this.transition('REQUEST_RESULTS');
+                    }
+
+                    // wait for new result arrival
+                    return this.transition('REQUEST_STATUS');
                 }).catch((err) => {
                     if (err.data && err.data.code && err.data.code === 'unauthorized') {
                         return Promise.reject(err);
@@ -153,20 +163,20 @@ export class SumologicQuerier {
                 break;
             case 'REQUEST_RESULTS':
                 if (this.format === 'time_series_records' || this.format === 'records') {
-                    if (this.status.data.recordCount === 0) {
-                        return Promise.resolve([]);
-                    }
                     let limit = Math.min(10000, this.status.data.recordCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
-                        return response.data;
+                        return Observable.concat(
+                            Observable.fromArray(response.data.records),
+                            this.transition('REQUEST_STATUS')
+                        );
                     });
                 } else if (this.format === 'messages') {
-                    if (this.status.data.messageCount === 0) {
-                        return Promise.resolve([]);
-                    }
                     let limit = Math.min(10000, this.status.data.messageCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
-                        return response.data;
+                        return Observable.concat(
+                            Observable.fromArray(response.data.messages),
+                            this.transition('REQUEST_STATUS')
+                        );
                     });
                 } else {
                     return Promise.reject({ message: 'unsupported type' });

@@ -73,7 +73,7 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
-        return new SumologicQuerier(params, format, this.timeoutSec, useObservable, this, this.backendSrv);
+        return this.logQuery(params, target.format, true);
       }).value();
 
     let source = new Observable(observer => {
