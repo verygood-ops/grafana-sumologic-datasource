@@ -124,11 +124,9 @@ export class SumologicQuerier {
 
         switch (this.state) {
             case 'CREATE_SEARCH_JOB':
-                return Observable.defer(() => {
-                    return this.doRequest('POST', '/v1/search/jobs', this.params).then((job) => {
-                        this.job = job;
-                        return this.transition('REQUEST_STATUS');
-                    });
+                return this.doRequest('POST', '/v1/search/jobs', this.params).then((job) => {
+                    this.job = job;
+                    return this.transition('REQUEST_STATUS');
                 });
                 break;
             case 'REQUEST_STATUS':
