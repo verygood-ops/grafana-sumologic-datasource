@@ -4,7 +4,7 @@ import angular from 'angular';
 import dateMath from 'app/core/utils/datemath';
 import TableModel from 'app/core/table_model';
 import { SumologicQuerier } from './querier';
-import { Observable } from 'rxjs/Observable';
+import Observable from 'rxjs/Observable';
 
 export class SumologicDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {

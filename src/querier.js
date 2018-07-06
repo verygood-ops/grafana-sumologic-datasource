@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Observable } from 'rxjs/Observable';
+import Observable from 'rxjs/Observable';
 
 export class SumologicQuerier {
     constructor(params, format, timeoutSec, useObservable, datasource, backendSrv) {
