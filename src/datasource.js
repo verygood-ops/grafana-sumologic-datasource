@@ -4,8 +4,7 @@ import angular from 'angular';
 import dateMath from 'app/core/utils/datemath';
 import TableModel from 'app/core/table_model';
 import { SumologicQuerier } from './querier';
-import { Observable } from 'vendor/npm/rxjs/Observable';
-
+import { Observable } from 'rxjs/Observable';
 
 export class SumologicDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
@@ -73,16 +72,16 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
-        return this.logQuery(params, target.format, true)
-          .scan((acc, one) => {
-            acc.fields = one.fields;
-            if (acc.records) {
+        let q = this.logQuery(params, target.format, true)
+        return q.scan((acc, one) => {
+          acc.fields = one.fields;
+          if (acc.records) {
 
-            } else if (acc.messages) {
+          } else if (acc.messages) {
 
-            }
-            return acc;
-          }, [])
+          }
+          return acc;
+        }, [])
           .map((data) => {
             if (format === 'time_series_records') {
               return this.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());

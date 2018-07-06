@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Observable } from 'vendor/npm/rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 
 export class SumologicQuerier {
     constructor(params, format, timeoutSec, useObservable, datasource, backendSrv) {
@@ -14,9 +14,13 @@ export class SumologicQuerier {
 
     getResult() {
         this.startTime = new Date();
-        return this.delay(() => {
+        if (!this.useObservable) {
+            return this.delay(() => {
+                return this.transition('CREATE_SEARCH_JOB');
+            }, Math.random() * 1000);
+        } else {
             return this.transition('CREATE_SEARCH_JOB');
-        }, Math.random() * 1000);
+        }
     }
 
     transition(state) {
@@ -25,7 +29,7 @@ export class SumologicQuerier {
         if (!this.useObservable) {
             return this.loop();
         } else {
-            return this.loopForObservable();
+            return this.loopForObservable(Observable);
         }
     }
 
@@ -35,7 +39,7 @@ export class SumologicQuerier {
             if (!this.useObservable) {
                 return this.loop();
             } else {
-                return this.loopForObservable();
+                return this.loopForObservable(Observable);
             }
         }, this.calculateRetryWait(1000, this.retryCount));
     }
@@ -108,7 +112,7 @@ export class SumologicQuerier {
         }
     }
 
-    loopForObservable() {
+    loopForObservable(Observable) {
         if (this.job) {
             let now = new Date();
             if (now - this.startTime > (this.timeoutSec * 1000)) {
@@ -166,7 +170,7 @@ export class SumologicQuerier {
                     let limit = Math.min(10000, this.status.data.recordCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
                         return Observable.concat(
-                            Observable.fromArray(response.data.records),
+                            Observable.fromArray(response.data),
                             this.transition('REQUEST_STATUS')
                         );
                     });
@@ -174,7 +178,7 @@ export class SumologicQuerier {
                     let limit = Math.min(10000, this.status.data.messageCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
                         return Observable.concat(
-                            Observable.fromArray(response.data.messages),
+                            Observable.fromArray(response.data),
                             this.transition('REQUEST_STATUS')
                         );
                     });
