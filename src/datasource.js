@@ -92,22 +92,9 @@ export class SumologicDatasource {
         // options.targets[index].format === 'records' || options.targets[index].format === 'messages';
         // result.push(this.transformDataToTable(tableResponses));
       }).value();
-    return Observable.merge(queries).map((allData) => {
-
-    }).scan();//
-
-
-    let source = new Observable(observer => {
-      let result = this.loopForObservable();
-      let from = options.range.from.valueOf();
-      let to = options.range.to.valueOf();
-      let promises = queries.map((query) => {
-        //return querier.getResult();
-
-      });
-      let cancel = setInterval(() => {
-        let result = [];
-
+    return Observable
+      .combineLatest(queries)
+      .map((responses) => {
         responses = responses.filter((r) => { return !_.isEmpty(r); });
 
         if (this.hasAdhocFilter()) {
@@ -141,35 +128,16 @@ export class SumologicDatasource {
           });
         }
 
-        _.each(responses, (response, index) => {
-          if (options.targets[index].format === 'time_series_records') {
-            result = result.concat(this.transformRecordsToTimeSeries(response, options.targets[index], options.range.to.valueOf()));
-          }
-        });
-
         let tableResponses = _.chain(responses)
-          .filter((response, index) => {
-            return options.targets[index].format === 'records' || options.targets[index].format === 'messages';
+          .map((response, index) => {
+            if (options.targets[index].format === 'records' || options.targets[index].format === 'messages') {
+              return this.transformDataToTable(response);
+            };
+            return response;
           })
           .flatten()
           .value();
-
-        if (tableResponses.length > 0) {
-          result.push(this.transformDataToTable(tableResponses));
-        }
-
-        return { data: result };
-        observer.next({
-          data: [result],
-          range: { from: from, to: to }
-        });
-      }, 100);
-
-      return () => {
-        clearInterval(cancel);
-      };
-    });
-    return source;
+      });
   }
 
   metricFindQuery(query) {
