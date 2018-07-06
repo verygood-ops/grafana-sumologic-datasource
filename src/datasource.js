@@ -89,8 +89,6 @@ export class SumologicDatasource {
             }
             return data;
           });
-        // options.targets[index].format === 'records' || options.targets[index].format === 'messages';
-        // result.push(this.transformDataToTable(tableResponses));
       }).value();
     return Observable
       .combineLatest(queries)
