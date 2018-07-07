@@ -29,7 +29,7 @@ export class SumologicQuerier {
         if (!this.useObservable) {
             return this.loop();
         } else {
-            return this.loopForObservable(Observable);
+            return this.loopForObservable();
         }
     }
 
@@ -39,7 +39,7 @@ export class SumologicQuerier {
             if (!this.useObservable) {
                 return this.loop();
             } else {
-                return this.loopForObservable(Observable);
+                return this.loopForObservable();
             }
         }, this.calculateRetryWait(1000, this.retryCount));
     }
@@ -112,7 +112,7 @@ export class SumologicQuerier {
         }
     }
 
-    loopForObservable(Observable) {
+    loopForObservable() {
         if (this.job) {
             let now = new Date();
             if (now - this.startTime > (this.timeoutSec * 1000)) {
@@ -145,7 +145,7 @@ export class SumologicQuerier {
                         return Observable.empty();
                     }
 
-                    if (prevMessageCount !== this.messageCount || prevRecordCount !== this.recordCount) {
+                    if (this.messageCount > prevMessageCount || this.recordCount > prevRecordCount) {
                         return this.transition('REQUEST_RESULTS');
                     }
 
@@ -168,7 +168,7 @@ export class SumologicQuerier {
                     let limit = Math.min(10000, this.status.data.recordCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
                         return Observable.concat(
-                            Observable.fromArray(response.data),
+                            Observable.from(response.data),
                             this.transition('REQUEST_STATUS')
                         );
                     });
@@ -176,7 +176,7 @@ export class SumologicQuerier {
                     let limit = Math.min(10000, this.status.data.messageCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
                         return Observable.concat(
-                            Observable.fromArray(response.data),
+                            Observable.from(response.data),
                             this.transition('REQUEST_STATUS')
                         );
                     });
