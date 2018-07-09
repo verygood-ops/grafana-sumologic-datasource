@@ -77,7 +77,7 @@ export class SumologicDatasource {
         let q = this.logQuery(params, target.format, true)
         return q.subscribe(
           value => {
-            console.log(`onNext: ${value.messges.length}`)
+            console.log(`onNext: ${value}`)
           },
           error => {
             console.log(`onError: ${error}`)
