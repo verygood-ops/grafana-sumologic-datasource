@@ -72,22 +72,30 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
+        let self = this;
         let q = this.logQuery(params, target.format, true)
-        return q.scan((acc, one) => {
-          acc.fields = one.fields;
-          if (acc.records) {
-
-          } else if (acc.messages) {
-
-          }
-          return acc;
-        }, [])
+        return Observable.from(q)
+          .mergeMap(value => value)
+          .scan((acc, one) => {
+            acc.fields = one.fields;
+            if (one.records) {
+              acc.records = acc.records.concat(one.records);
+            } else if (one.messages) {
+              acc.messages = acc.messages.concat(one.messages);
+            }
+            return acc;
+          }, { fields: {}, records: [], messages: [] })
           .map((data) => {
-            if (format === 'time_series_records') {
-              return this.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
+            if (target.format === 'time_series_records') {
+              return self.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
             }
             return data;
           });
+        //.subscribe(
+        //  value => console.log(`onNext: ${value}`),
+        //  error => console.log(`onError: ${error}`),
+        //  () => console.log(`onCompleted`)
+        //);
       }).value();
     return Observable
       .combineLatest(queries)
@@ -125,15 +133,13 @@ export class SumologicDatasource {
           });
         }
 
-        let tableResponses = _.chain(responses)
-          .map((response, index) => {
-            if (options.targets[index].format === 'records' || options.targets[index].format === 'messages') {
-              return this.transformDataToTable(response);
-            };
-            return response;
-          })
-          .flatten()
-          .value();
+        let tableResponses = _.filter(responses, (response, index) => {
+          return (options.targets[index].format === 'records' || options.targets[index].format === 'messages');
+        })
+        if (tableResponses.length > 0) {
+          return this.transformDataToTable(response);
+        }
+        return { data: responses.flatten() };
       });
   }
 

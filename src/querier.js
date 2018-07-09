@@ -142,7 +142,7 @@ export class SumologicQuerier {
                     }
 
                     if (this.status.data.state === 'DONE GATHERING RESULTS') {
-                        return Observable.empty();
+                        return this.transition('REQUEST_RESULTS');
                     }
 
                     if (this.messageCount > prevMessageCount || this.recordCount > prevRecordCount) {
@@ -167,16 +167,22 @@ export class SumologicQuerier {
                 if (this.format === 'time_series_records' || this.format === 'records') {
                     let limit = Math.min(10000, this.status.data.recordCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
+                        if (this.status.data.state === 'DONE GATHERING RESULTS') {
+                            return Observable.from([response.data]);
+                        }
                         return Observable.concat(
-                            Observable.from(response.data),
+                            Observable.from([response.data]),
                             this.transition('REQUEST_STATUS')
                         );
                     });
                 } else if (this.format === 'messages') {
                     let limit = Math.min(10000, this.status.data.messageCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
+                        if (this.status.data.state === 'DONE GATHERING RESULTS') {
+                            return Observable.from([response.data]);
+                        }
                         return Observable.concat(
-                            Observable.from(response.data),
+                            Observable.from([response.data]),
                             this.transition('REQUEST_STATUS')
                         );
                     });
