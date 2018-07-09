@@ -19,7 +19,9 @@ export class SumologicQuerier {
                 return this.transition('CREATE_SEARCH_JOB');
             }, Math.random() * 1000);
         } else {
-            return this.transition('CREATE_SEARCH_JOB');
+            return Observable.defer(() => {
+                return this.transition('CREATE_SEARCH_JOB');
+            });
         }
     }
 
@@ -170,10 +172,12 @@ export class SumologicQuerier {
                         if (this.status.data.state === 'DONE GATHERING RESULTS') {
                             return Observable.from([response.data]);
                         }
-                        return Observable.concat(
-                            Observable.from([response.data]),
-                            this.transition('REQUEST_STATUS')
-                        );
+                        return Observable.from([response.data])
+                            .concat(
+                                Observable.defer(() => {
+                                    return this.transition('REQUEST_STATUS');
+                                })
+                            );
                     });
                 } else if (this.format === 'messages') {
                     let limit = Math.min(10000, this.status.data.messageCount);
@@ -181,10 +185,12 @@ export class SumologicQuerier {
                         if (this.status.data.state === 'DONE GATHERING RESULTS') {
                             return Observable.from([response.data]);
                         }
-                        return Observable.concat(
-                            Observable.from([response.data]),
-                            this.transition('REQUEST_STATUS')
-                        );
+                        return Observable.from([response.data])
+                            .concat(
+                                Observable.defer(() => {
+                                    return this.transition('REQUEST_STATUS');
+                                })
+                            );
                     });
                 } else {
                     return Promise.reject({ message: 'unsupported type' });

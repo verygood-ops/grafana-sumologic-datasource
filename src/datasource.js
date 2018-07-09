@@ -44,6 +44,7 @@ export class SumologicDatasource {
   }
 
   query(options) {
+    let self = this;
     let queries = _.chain(options.targets)
       .filter((target) => {
         return !target.hide && target.query;
@@ -73,25 +74,32 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
-        let self = this;
         let q = this.logQuery(params, target.format, true)
-        return Observable.from(q)
-          .mergeMap(value => value)
-          .scan((acc, one) => {
-            acc.fields = one.fields;
-            if (one.records) {
-              acc.records = acc.records.concat(one.records);
-            } else if (one.messages) {
-              acc.messages = acc.messages.concat(one.messages);
-            }
-            return acc;
-          }, { fields: {}, records: [], messages: [] })
-          .map((data) => {
-            if (target.format === 'time_series_records') {
-              return self.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
-            }
-            return data;
-          });
+        return q.subscribe(
+          value => {
+            console.log(`onNext: ${value.messges.length}`)
+          },
+          error => {
+            console.log(`onError: ${error}`)
+          },
+          () => console.log('onCompleted')
+        );
+        //.mergeMap(value => value)
+        //.scan((acc, one) => {
+        //  acc.fields = one.fields;
+        //  if (one.records) {
+        //    acc.records = (acc.records || []).concat(one.records);
+        //  } else if (one.messages) {
+        //    acc.messages = (acc.messages || []).concat(one.messages);
+        //  }
+        //  return acc;
+        //}, {})
+        //.map((data) => {
+        //  if (target.format === 'time_series_records') {
+        //    return self.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
+        //  }
+        //  return data;
+        //});
       }).value();
     return Observable
       .combineLatest(queries)
@@ -137,7 +145,7 @@ export class SumologicDatasource {
           .value();
 
         if (tableResponses.length > 0) {
-          return this.transformDataToTable(tableResponses);
+          return { data: [self.transformDataToTable(tableResponses)] };
         }
         return { data: responses.flatten() };
       });
