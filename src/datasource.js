@@ -6,6 +6,7 @@ import TableModel from 'app/core/table_model';
 import { SumologicQuerier } from './querier';
 import Observable from 'rxjs/Observable';
 
+
 export class SumologicDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = instanceSettings.type;
@@ -91,11 +92,6 @@ export class SumologicDatasource {
             }
             return data;
           });
-        //.subscribe(
-        //  value => console.log(`onNext: ${value}`),
-        //  error => console.log(`onError: ${error}`),
-        //  () => console.log(`onCompleted`)
-        //);
       }).value();
     return Observable
       .combineLatest(queries)
@@ -133,11 +129,15 @@ export class SumologicDatasource {
           });
         }
 
-        let tableResponses = _.filter(responses, (response, index) => {
-          return (options.targets[index].format === 'records' || options.targets[index].format === 'messages');
-        })
+        let tableResponses = _.chain(responses)
+          .filter((response, index) => {
+            return options.targets[index].format === 'records' || options.targets[index].format === 'messages';
+          })
+          .flatten()
+          .value();
+
         if (tableResponses.length > 0) {
-          return this.transformDataToTable(response);
+          return this.transformDataToTable(tableResponses);
         }
         return { data: responses.flatten() };
       });
