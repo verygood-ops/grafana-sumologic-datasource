@@ -74,33 +74,23 @@ export class SumologicDatasource {
             params.query = params.query.replace(/\|/, filterQuery + ' |');
           }
         }
-        let q = this.logQuery(params, target.format, true)
-        return q.mergeMap(value => value)
-          .subscribe(
-            value => {
-              console.log(`onNext: ${value}`)
-            },
-            error => {
-              console.log(`onError: ${error}`)
-            },
-            () => console.log('onCompleted')
-          );
-        //.mergeMap(value => value)
-        //.scan((acc, one) => {
-        //  acc.fields = one.fields;
-        //  if (one.records) {
-        //    acc.records = (acc.records || []).concat(one.records);
-        //  } else if (one.messages) {
-        //    acc.messages = (acc.messages || []).concat(one.messages);
-        //  }
-        //  return acc;
-        //}, {})
-        //.map((data) => {
-        //  if (target.format === 'time_series_records') {
-        //    return self.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
-        //  }
-        //  return data;
-        //});
+        return this.logQuery(params, target.format, true)
+          .mergeMap(value => value)
+          .scan((acc, one) => {
+            acc.fields = one.fields;
+            if (one.records) {
+              acc.records = (acc.records || []).concat(one.records);
+            } else if (one.messages) {
+              acc.messages = (acc.messages || []).concat(one.messages);
+            }
+            return acc;
+          }, {})
+          .map((data) => {
+            if (target.format === 'time_series_records') {
+              return self.transformRecordsToTimeSeries(data, target, options.range.to.valueOf());
+            }
+            return data;
+          });
       }).value();
     return Observable
       .combineLatest(queries)
