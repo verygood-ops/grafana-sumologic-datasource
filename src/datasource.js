@@ -75,15 +75,16 @@ export class SumologicDatasource {
           }
         }
         let q = this.logQuery(params, target.format, true)
-        return q.subscribe(
-          value => {
-            console.log(`onNext: ${value}`)
-          },
-          error => {
-            console.log(`onError: ${error}`)
-          },
-          () => console.log('onCompleted')
-        );
+        return q.mergeMap(value => value)
+          .subscribe(
+            value => {
+              console.log(`onNext: ${value}`)
+            },
+            error => {
+              console.log(`onError: ${error}`)
+            },
+            () => console.log('onCompleted')
+          );
         //.mergeMap(value => value)
         //.scan((acc, one) => {
         //  acc.fields = one.fields;

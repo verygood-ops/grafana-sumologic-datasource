@@ -176,7 +176,7 @@ export class SumologicQuerier {
                             .concat(
                                 Observable.defer(() => {
                                     return this.transition('REQUEST_STATUS');
-                                })
+                                }).mergeMap(value => value)
                             );
                     });
                 } else if (this.format === 'messages') {
@@ -189,7 +189,7 @@ export class SumologicQuerier {
                             .concat(
                                 Observable.defer(() => {
                                     return this.transition('REQUEST_STATUS');
-                                })
+                                }).mergeMap(value => value)
                             );
                     });
                 } else {
