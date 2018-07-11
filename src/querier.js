@@ -10,6 +10,8 @@ export class SumologicQuerier {
         this.datasource = datasource;
         this.backendSrv = backendSrv;
         this.retryCount = 0;
+        this.offset = 0;
+        this.maximumOffset = 10000;
     }
 
     getResult() {
@@ -95,7 +97,7 @@ export class SumologicQuerier {
                     if (this.status.data.recordCount === 0) {
                         return Promise.resolve([]);
                     }
-                    let limit = Math.min(10000, this.status.data.recordCount);
+                    let limit = Math.min(this.maximumOffset, this.status.data.recordCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
                         return response.data;
                     });
@@ -103,7 +105,7 @@ export class SumologicQuerier {
                     if (this.status.data.messageCount === 0) {
                         return Promise.resolve([]);
                     }
-                    let limit = Math.min(10000, this.status.data.messageCount);
+                    let limit = Math.min(this.maximumOffset, this.status.data.messageCount);
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
                         return response.data;
                     });
@@ -167,9 +169,10 @@ export class SumologicQuerier {
                 break;
             case 'REQUEST_RESULTS':
                 if (this.format === 'time_series_records' || this.format === 'records') {
-                    let limit = Math.min(10000, this.status.data.recordCount);
-                    return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=0&limit=' + limit).then((response) => {
-                        if (this.status.data.state === 'DONE GATHERING RESULTS') {
+                    let limit = Math.min(this.maximumOffset, this.status.data.recordCount);
+                    return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=' + this.offset + '&limit=' + limit).then((response) => {
+                        this.offset += response.data.records.length;
+                        if (this.status.data.state === 'DONE GATHERING RESULTS' || this.offset >= this.maximumOffset) {
                             return Observable.from([response.data]);
                         }
                         return Observable.from([response.data])
@@ -180,9 +183,10 @@ export class SumologicQuerier {
                             );
                     });
                 } else if (this.format === 'messages') {
-                    let limit = Math.min(10000, this.status.data.messageCount);
-                    return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=0&limit=' + limit).then((response) => {
-                        if (this.status.data.state === 'DONE GATHERING RESULTS') {
+                    let limit = Math.min(this.maximumOffset, this.status.data.messageCount);
+                    return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=' + this.offset + '&limit=' + limit).then((response) => {
+                        this.offset += response.data.messages.length;
+                        if (this.status.data.state === 'DONE GATHERING RESULTS' || this.offset >= this.maximumOffset) {
                             return Observable.from([response.data]);
                         }
                         return Observable.from([response.data])
