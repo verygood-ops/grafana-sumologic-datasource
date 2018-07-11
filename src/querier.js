@@ -169,7 +169,7 @@ export class SumologicQuerier {
                 break;
             case 'REQUEST_RESULTS':
                 if (this.format === 'time_series_records' || this.format === 'records') {
-                    let limit = Math.min(this.maximumOffset, this.status.data.recordCount);
+                    let limit = Math.min(this.maximumOffset, this.status.data.recordCount) - this.offset;
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/records?offset=' + this.offset + '&limit=' + limit).then((response) => {
                         this.offset += response.data.records.length;
                         if (this.status.data.state === 'DONE GATHERING RESULTS' || this.offset >= this.maximumOffset) {
@@ -183,7 +183,7 @@ export class SumologicQuerier {
                             );
                     });
                 } else if (this.format === 'messages') {
-                    let limit = Math.min(this.maximumOffset, this.status.data.messageCount);
+                    let limit = Math.min(this.maximumOffset, this.status.data.messageCount) - this.offset;
                     return this.doRequest('GET', '/v1/search/jobs/' + this.job.data.id + '/messages?offset=' + this.offset + '&limit=' + limit).then((response) => {
                         this.offset += response.data.messages.length;
                         if (this.status.data.state === 'DONE GATHERING RESULTS' || this.offset >= this.maximumOffset) {
