@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
-import dateMath from 'app/core/utils/datemath';
-import TableModel from 'app/core/table_model';
+import dateMath from 'grafana/app/core/utils/datemath';
+import TableModel from 'grafana/app/core/table_model';
 import { SumologicQuerier } from './querier';
 import Observable from 'rxjs/Observable';
 
