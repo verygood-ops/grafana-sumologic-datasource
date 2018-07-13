@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import moment from 'moment';
-import angular from 'angular';
 import dateMath from 'grafana/app/core/utils/datemath';
 import TableModel from 'grafana/app/core/table_model';
 import { SumologicQuerier } from './querier';
