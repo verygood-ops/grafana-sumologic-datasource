@@ -1,7 +1,7 @@
 {
-  "name": "grafana-flux-datasource",
+  "name": "sumologic-datasource",
   "version": "1.0.0",
-  "description": "Grafana data source for InfluxDB (Flux query support)",
+  "description": "",
   "scripts": {
     "build": "webpack --config webpack.config.prod.js",
     "dev": "webpack --mode development",
