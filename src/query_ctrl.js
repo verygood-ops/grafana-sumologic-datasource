@@ -1,5 +1,4 @@
 import './query_parameter_ctrl';
-import _ from 'lodash';
 import { QueryCtrl } from 'grafana/app/plugins/sdk';
 import './mode-sumologic';
 import './snippets/sumologic';

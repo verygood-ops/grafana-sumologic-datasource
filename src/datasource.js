@@ -3,8 +3,16 @@ import moment from 'moment';
 import dateMath from 'grafana/app/core/utils/datemath';
 import TableModel from 'grafana/app/core/table_model';
 import { SumologicQuerier } from './querier';
-import Observable from 'rxjs/Observable';
-
+import { Observable } from 'rxjs';
+import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/from';
+import 'rxjs/add/observable/defer';
+import 'rxjs/add/observable/combineLatest';
+import 'rxjs/add/operator/concat';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/scan';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/combineAll';
 
 export class SumologicDatasource {
   constructor(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
