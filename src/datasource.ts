@@ -303,13 +303,11 @@ export class SumologicDatasource {
       }
     });
 
-    let timeSeries = [] as {}[];
-
     if (valueFields.length == 0) {
-      return {target: metricLabel, datapoints: dps};
+      return { target: metricLabel, datapoints: dps };
     }
 
-    records =records.sort((a, b) => {
+    records = records.sort((a, b) => {
       if (keyField === '') {
         return 0;
       }
@@ -322,10 +320,10 @@ export class SumologicDatasource {
       }
     });
 
-    valueFields.forEach((valueField) => {
-      let result = {};
-      records.forEach((r) => {
-        metricLabel = this.createMetricLabel(r.map, target);
+    let result = {};
+    records.forEach((r) => {
+      valueFields.forEach((valueField) => {
+        metricLabel = this.createMetricLabel(_.extend(r.map, { valueField: valueField }), target);
         result[metricLabel] = result[metricLabel] || [];
         let timestamp = parseFloat(r.map[keyField] || defaultValue);
         let len = result[metricLabel].length;
@@ -335,12 +333,11 @@ export class SumologicDatasource {
         }
         result[metricLabel].push([parseFloat(r.map[valueField]), timestamp]);
       });
-
-      _.map(result, (v) => {
-        timeSeries.push({target: valueField, datapoints: v});
-      });
     });
-    return timeSeries;
+
+    return _.map(result, (v, k) => {
+      return { target: k, datapoints: v };
+    });
   }
 
   createMetricLabel(record, target) {
